@@ -1,6 +1,6 @@
 Task_manager_With_GetX
 
-A new Flutter project.
+A new Flutter project. Development by Shohag Joarder
 
 ## Getting Started
 
