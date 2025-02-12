@@ -1,0 +1,176 @@
+import 'dart:convert';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:tast_manager/data/models/user_data.dart';
+import 'package:tast_manager/data/services/network_caller.dart';
+import 'package:tast_manager/data/utils/urls.dart';
+import 'package:tast_manager/ui/controllers/auth_controller.dart';
+import 'package:tast_manager/ui/controllers/sign_in_controller.dart';
+import 'package:tast_manager/ui/screen/bottom_nav_screen/main_bottom_nav_screen.dart';
+import 'package:tast_manager/ui/screen/forget_pass_email_verification_screen.dart';
+import 'package:tast_manager/ui/screen/sign_up_screen.dart';
+import 'package:tast_manager/widgets/show_snackber_message.dart';
+
+import '../../utils/app_colors.dart';
+import '../../widgets/background_screen.dart';
+
+class SignInScreen extends StatefulWidget {
+  static String name = 'sing-in-screen';
+
+  const SignInScreen({super.key});
+
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  TextEditingController emailTEController = TextEditingController();
+  TextEditingController passwordTEController = TextEditingController();
+  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final SignInController _signInController = Get.find<SignInController>();
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      body: BackgroundScreen(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 100),
+                Text(
+                  'Get Started With',
+                  style: textTheme.titleLarge,
+                ),
+                const SizedBox(height: 24),
+                Form(
+                  key: formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (String? value) {
+                          if (value?.trim().isEmpty ?? true) {
+                            return 'Enter your email';
+                          }
+                          return null;
+                        },
+                        keyboardType: TextInputType.emailAddress,
+                        controller: emailTEController,
+                        decoration: const InputDecoration(hintText: 'Email'),
+                      ),
+                      const SizedBox(
+                        height: 12,
+                      ),
+                      TextFormField(
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (String? value) {
+                          if (value?.trim().isEmpty ?? true) {
+                            return 'Enter your password';
+                          }
+                          return null;
+                        },
+                        obscureText: true,
+                        controller: passwordTEController,
+                        decoration: const InputDecoration(hintText: 'Password'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GetBuilder<SignInController>(builder: (controller) {
+                  return Visibility(
+                    visible: controller.signInProgress == false,
+                    replacement: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          logInRequest();
+                        }
+                      },
+                      child: const Icon(Icons.arrow_circle_right_outlined),
+                    ),
+                  );
+                }),
+                const SizedBox(
+                  height: 20,
+                ),
+                Center(
+                  child: Column(
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8))),
+                        onPressed: () {
+                          Get.toNamed(ForgetPassEmailVerification.name);
+                        },
+                        child: const Text('Forget password'),
+                      ),
+                      const SizedBox(
+                        height: 6,
+                      ),
+                      buildRichText(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildRichText() {
+    return RichText(
+      text: TextSpan(
+        text: "Don't have an account? ",
+        style: TextStyle(
+          color: AppColors.blackColor,
+          fontWeight: FontWeight.w600,
+        ),
+        children: [
+          TextSpan(
+            text: ' Sign up',
+            style: TextStyle(
+              color: AppColors.themColor,
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                Get.toNamed(SignUpScreen.name);
+              },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> logInRequest() async {
+    final bool isSuccess = await _signInController.logInRequest(
+        emailTEController.text.trim(), passwordTEController.text);
+
+    if (isSuccess) {
+      Mymessage(_signInController.message, context);
+      Get.offAllNamed(MainBottomNavScreen.name);
+    } else {
+      Mymessage(_signInController.message, context);
+
+    }
+  }
+
+  @override
+  void dispose() {
+    emailTEController.dispose();
+    passwordTEController.dispose();
+    super.dispose();
+  }
+}
